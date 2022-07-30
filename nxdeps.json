@@ -1,0 +1,74 @@
+{
+  "version": "5.0",
+  "deps": {
+    "@nrwl/cli": "14.4.2",
+    "@nrwl/js": "14.4.2",
+    "@nrwl/nx-cloud": "latest",
+    "@nrwl/workspace": "14.4.2",
+    "nx": "14.4.2",
+    "prettier": "^2.6.2",
+    "typescript": "~4.7.2"
+  },
+  "pathMappings": {},
+  "nxJsonPlugins": [],
+  "nodes": {},
+  "externalNodes": {
+    "npm:@nrwl/cli": {
+      "type": "npm",
+      "name": "npm:@nrwl/cli",
+      "data": {
+        "version": "14.4.2",
+        "packageName": "@nrwl/cli"
+      }
+    },
+    "npm:@nrwl/js": {
+      "type": "npm",
+      "name": "npm:@nrwl/js",
+      "data": {
+        "version": "14.4.2",
+        "packageName": "@nrwl/js"
+      }
+    },
+    "npm:@nrwl/nx-cloud": {
+      "type": "npm",
+      "name": "npm:@nrwl/nx-cloud",
+      "data": {
+        "version": "latest",
+        "packageName": "@nrwl/nx-cloud"
+      }
+    },
+    "npm:@nrwl/workspace": {
+      "type": "npm",
+      "name": "npm:@nrwl/workspace",
+      "data": {
+        "version": "14.4.2",
+        "packageName": "@nrwl/workspace"
+      }
+    },
+    "npm:nx": {
+      "type": "npm",
+      "name": "npm:nx",
+      "data": {
+        "version": "14.4.2",
+        "packageName": "nx"
+      }
+    },
+    "npm:prettier": {
+      "type": "npm",
+      "name": "npm:prettier",
+      "data": {
+        "version": "^2.6.2",
+        "packageName": "prettier"
+      }
+    },
+    "npm:typescript": {
+      "type": "npm",
+      "name": "npm:typescript",
+      "data": {
+        "version": "~4.7.2",
+        "packageName": "typescript"
+      }
+    }
+  },
+  "dependencies": {}
+}
