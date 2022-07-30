@@ -1,0 +1,61 @@
+version: "3.9"
+
+services:
+
+  redis:
+      image: redis:6.2.6
+      container_name: redis
+      restart: always
+      ports:
+          - "6379:6379"
+
+  postgres:
+      image: postgres:14.4
+      restart: always
+      environment:
+          - POSTGRES_USER=highper
+          - POSTGRES_PASSWORD=highper
+          - POSTGRES_DB=highper
+          - POSTGRES_SCHEMA=highper
+          # - TZ="America/Chicago"
+          # - PGTZ="America/Chicago"
+      ports:
+          - "5432:5432"
+      # volumes:
+      #     - ./data/postgres:/var/lib/postgresql/data
+
+  hasura:
+    image: hasura/graphql-engine:v2.9.0
+    ports:
+      - "8080:8080"
+    depends_on:
+      - "postgres"
+    restart: always
+    environment:
+      ## postgres database to store Hasura metadata
+      HASURA_GRAPHQL_METADATA_DATABASE_URL: postgres://highper:highper@postgres:5432/highper
+      ## this env var can be used to add the above postgres database to Hasura as a data source. this can be removed/updated based on your needs
+      PG_DATABASE_URL: postgres://highper:highper@postgres:5432/highper
+      ## enable the console served by server
+      HASURA_GRAPHQL_ENABLE_CONSOLE: "true" # set to "false" to disable console
+      ## enable debugging mode. It is recommended to disable this in production
+      HASURA_GRAPHQL_DEV_MODE: "true"
+      HASURA_GRAPHQL_ENABLED_LOG_TYPES: startup, http-log, webhook-log, websocket-log, query-log
+      ## uncomment next line to set an admin secret
+      # HASURA_GRAPHQL_ADMIN_SECRET: myadminsecretkey
+
+  metabase:
+    image: metabase/metabase:latest
+    depends_on:
+       - postgres
+    ports:
+      - "3000:3000"
+    environment:
+        - MB_DB_TYPE=postgres
+        - MB_DB_DBNAME=highper
+        - MB_DB_PORT=5432
+        - MB_DB_USER=highper
+        - MB_DB_PASS=highper
+        - MB_DB_HOST=postgres
+
+
