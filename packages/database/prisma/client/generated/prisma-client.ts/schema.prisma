@@ -1,0 +1,471 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output = "client/generated/prisma-client.ts"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("PRISMA_DATABASE_URL")
+}
+
+model Accounts {
+  id                     String    @id(map: "PK_accounts")
+  name                   String
+  accountId              String?   @map("account_id")
+  marketValue            Decimal?  @map("market_value") @db.Decimal(13, 2)
+  buyingPower            Decimal?  @map("buying_power") @db.Decimal(13, 2)
+  cash                   Decimal?  @db.Decimal(13, 2)
+  currency               String
+  daytradeCount          Int       @default(0) @map("daytrade_count")
+  daytradeBuyingPower    Decimal?  @map("daytrade_buying_power") @db.Decimal(13, 2)
+  regulationTBuyingPower Decimal?  @map("regulation_t_buying_power") @db.Decimal(13, 2)
+  initialMargin          Decimal?  @map("initial_margin") @db.Decimal(13, 2)
+  lastMaintenanceMargin  Decimal?  @map("last_maintenance_margin") @db.Decimal(13, 2)
+  longMarketValue        Decimal?  @map("long_market_value") @db.Decimal(13, 2)
+  shortMarketValue       Decimal?  @map("short_market_value") @db.Decimal(13, 2)
+  maintenanceMargin      Decimal?  @map("maintenance_margin") @db.Decimal(13, 2)
+  multiplier             Decimal?  @db.Decimal(13, 2)
+  sma                    Decimal?  @db.Decimal(13, 2)
+  status                 String?
+  createdAt              DateTime  @default(now()) @map("created_at")
+  updatedAt              DateTime? @updatedAt @map("updated_at")
+
+  Orders    Orders[]
+  Positions Positions[]
+
+  @@map("accounts")
+}
+
+model AmeritradeEvents {
+  id        String    @id(map: "PK_ameritrade_events")
+  message   Json
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime? @updatedAt @map("updated_at")
+
+  @@map("ameritrade_events")
+}
+
+model AmeritradeTokens {
+  id        Int       @id(map: "PK_ameritrade_tokens") @default(autoincrement())
+  data      Json
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime? @updatedAt @map("updated_at")
+
+  @@map("ameritrade_tokens")
+}
+
+model BackTesting {
+  id                  String    @id(map: "PK_back_testing")
+  strategy            String
+  strategyParameters  Json?     @map("strategy_parameters")
+  startDate           DateTime  @map("start_date") @db.Timestamptz(6)
+  endDate             DateTime  @map("end_date") @db.Timestamptz(6)
+  resultLog           String?   @map("result_log")
+  marginPercentage    Decimal   @map("margin_percentage") @db.Decimal(5, 2)
+  averageInterestRate Decimal   @map("average_interest_rate") @db.Decimal(10, 4)
+  finalBalance        Decimal   @map("final_balance") @db.Decimal(20, 4)
+  profits             Decimal   @db.Decimal(20, 4)
+  losses              Decimal   @db.Decimal(20, 4)
+  highestInterestDay  Decimal   @map("highest_interest_day") @db.Decimal(10, 4)
+  lowestInterestDay   Decimal   @map("lowest_interest_day") @db.Decimal(10, 4)
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime? @updatedAt @map("updated_at")
+  code                String?
+  unrealizedProfit    Decimal?  @map("unrealized_profit") @db.Decimal
+
+  @@map("back_testing")
+}
+
+model Exchanges {
+  id           Int     @id(map: "PK_exchanges") @default(autoincrement())
+  name         String
+  description  String?
+  assetClass   String? @map("asset_class")
+  locale       String? @map("locale")
+  acronym      String? @map("acronym")
+  mic          String? @map("mic")
+  operatingMic String? @map("operating_mic")
+  participantId String? @map("participant_id")
+  url          String? @map("url")
+
+  Trades Trades[]
+  AskQuotes Quotes[] @relation(name: "AskExchange")
+  BidQuotes Quotes[] @relation(name: "BidExchange")
+
+  @@map("exchanges")
+}
+
+model migrations {
+  id        Int    @id(map: "PK_migrations") @default(autoincrement())
+  timestamp BigInt
+  name      String @db.VarChar
+}
+
+model Orders {
+  id                 String    @id(map: "PK_orders")
+  securityId         Int       @map("security_id")
+  strategyName       String?   @map("strategy_name")
+  accountId          String?   @map("account_id")
+  symbol             String
+  name               String?
+  type               String
+  timeInForce        String    @map("time_in_force")
+  quantity           Decimal   @db.Decimal(19, 8)
+  filledQuantity     Decimal   @map("filled_quantity") @db.Decimal(19, 8)
+  filledTime         DateTime? @map("filled_time") @db.Timestamptz(6)
+  stopPrice          Decimal?  @map("stop_price") @db.Decimal(7, 2)
+  limitPrice         Decimal?  @map("limit_price") @db.Decimal(7, 2)
+  filledAveragePrice Decimal?  @map("filled_average_price") @db.Decimal(7, 2)
+  status             String?
+  orderType          String?   @map("order_type")
+  trailAmount        Decimal?  @map("trail_amount") @db.Decimal(7, 2)
+  extendedHours      Boolean   @default(false) @map("extended_hours")
+  submittedAt        DateTime? @map("submitted_at") @db.Timestamptz(6)
+  expiredAt          DateTime? @map("expired_at") @db.Timestamptz(6)
+  canceledAt         DateTime? @map("canceled_at") @db.Timestamptz(6)
+  failedAt           DateTime? @map("failed_at") @db.Timestamptz(6)
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime? @updatedAt @map("updated_at")
+
+  Account        Accounts?        @relation(fields: [accountId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_accounts_orders")
+  PositionOrders PositionOrders[]
+
+  @@map("orders")
+}
+
+model Positions {
+  id              String    @id(map: "PK_positions")
+  price           Decimal   @db.Decimal(7, 2)
+  securityId      Int       @map("security_id")
+  strategyName    String?   @map("strategy_name")
+  name            String?
+  accountId       String?   @map("account_id")
+  quantity        Decimal   @db.Decimal(19, 8)
+  marketValue     Decimal?  @map("market_value") @db.Decimal(13, 2)
+  symbol          String
+  exchange        String?
+  positionPercent Decimal?  @map("position_percent") @db.Decimal(5, 2)
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime? @updatedAt @map("updated_at")
+  status          String?
+  type            String
+  sellLock        Boolean   @map("sell_lock")
+
+  Account Accounts? @relation(fields: [accountId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_accounts_positions")
+
+
+  PositionOrders PositionOrders[]
+  @@map("positions")
+}
+
+model PositionOrders {
+  positionId String   @map("position_id")
+  orderId    String   @map("order_id")
+  intent     String   @map("intent")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+
+  Position Positions? @relation(fields: [positionId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_positions_position_orders")
+  Order    Orders?    @relation(fields: [orderId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_orders_position_orders")
+  @@id([positionId, orderId, intent, createdAt])
+  @@map("position_orders")
+}
+
+model Preferences {
+  id                         Int       @id(map: "PK_preferences") @default(autoincrement())
+  singleTradeRiskLevel       Decimal?  @map("single_trade_risk_level") @db.Decimal
+  allTradeRiskLevel          Decimal?  @map("all_trade_risk_level") @db.Decimal
+  singleTradeVolatilityLevel Decimal?  @map("single_trade_volatility_level") @db.Decimal
+  allTradeVolatilityLevel    Decimal?  @map("all_trade_volatility_level") @db.Decimal
+  lowestStockPrice           Decimal?  @map("lowest_stock_price") @db.Decimal
+  createdAt                  DateTime  @default(now()) @map("created_at")
+  updatedAt                  DateTime? @updatedAt @map("updated_at")
+
+  @@map("preferences")
+}
+
+model SectorDaily {
+  id               Int       @id(map: "PK_sector_daily") @default(autoincrement())
+  sectorId         Int       @map("sector_id")
+  calendarDate     DateTime  @map("calendar_date") @db.Timestamptz(6)
+  realtimeReturn   Decimal   @map("realtime_return") @db.Decimal(7, 2)
+  oneDayReturn     Decimal   @map("one_day_return") @db.Decimal(7, 2)
+  fiveDayReturn    Decimal   @map("five_day_return") @db.Decimal(7, 2)
+  oneMonthReturn   Decimal   @map("one_month_return") @db.Decimal(7, 2)
+  threeMonthReturn Decimal   @map("three_month_return") @db.Decimal(7, 2)
+  oneYearReturn    Decimal   @map("one_year_return") @db.Decimal(7, 2)
+  threeYearReturn  Decimal   @map("three_year_return") @db.Decimal(7, 2)
+  fiveYearReturn   Decimal   @map("five_year_return") @db.Decimal(7, 2)
+  tenYearReturn    Decimal   @map("ten_year_return") @db.Decimal(7, 2)
+  ytdReturn        Decimal   @map("ytd_return") @db.Decimal(7, 2)
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime? @updatedAt @map("updated_at")
+
+  Sector Sectors @relation(fields: [sectorId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_sectors_sector_daily")
+
+  @@map("sector_daily")
+}
+
+model Sectors {
+  id        Int       @id(map: "PK_sectors") @default(autoincrement())
+  name      String
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime? @updatedAt @map("updated_at")
+
+  SectorDaily SectorDaily[]
+
+  @@map("sectors")
+}
+
+model Securities {
+  id                   Int       @id(map: "PK_securities") @default(autoincrement())
+  name                 String?
+  description          String?
+  symbol               String?   @unique(map: "security_symbol_idx")
+  cusip                String?
+  exchange             String?
+  securityTypeId       Int?      @map("security_type_id")
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime? @updatedAt @map("updated_at")
+  marketCap            Decimal?  @map("market_cap") @db.Decimal
+  companyName          String?   @map("company_name")
+  sector               String?
+  active               Boolean   @default(true)
+  delistedCalendarDate DateTime? @map("delisted_calendar_date") @db.Timestamptz(6)
+  companyDescription   String?   @map("company_description")
+  url                  String?
+  sharesOutstanding    Int?      @map("shares_outstanding")
+  numberOfEmployees    Int?      @map("number_of_employees")
+
+  SecurityDaily     SecurityDaily[]
+  SecurityDividends SecurityDividends[]
+  SecurityMinutely  SecurityMinutely[]
+  SecuritySecondly  SecuritySecondly[]
+  SecuritySplits    SecuritySplits[]
+  Trades            Trades[]
+  Quotes            Quotes[]
+
+
+  @@index([symbol, marketCap], map: "symbol_market_cap_idx")
+  @@map("securities")
+}
+
+model SecurityDaily {
+  id                      Int       @id(map: "PK_security_daily") @default(autoincrement())
+  securityId              Int       @map("security_id")
+  open                    Decimal?  @db.Decimal(13, 2)
+  high                    Decimal?  @db.Decimal(13, 2)
+  low                     Decimal?  @db.Decimal(13, 2)
+  close                   Decimal?  @db.Decimal(13, 2)
+  adjustedClose           Decimal?  @map("adjusted_close") @db.Decimal(13, 2)
+  marketCap               Decimal?  @map("market_cap") @db.Decimal(16, 4)
+  enterpriseValue         Decimal?  @map("enterprise_value") @db.Decimal(16, 4)
+  peRatio                 Decimal?  @map("pe_ratio") @db.Decimal(7, 2)
+  pbRatio                 Decimal?  @map("pb_ratio") @db.Decimal(7, 2)
+  trailingOneYearPegRatio Decimal?  @map("trailing_one_year_peg_ratio") @db.Decimal(7, 2)
+  dividendAmount          Decimal?  @map("dividend_amount") @db.Decimal(7, 2)
+  splitCoefficient        Decimal?  @map("split_coefficient") @db.Decimal(7, 2)
+  volume                  Int
+  adjusted                Boolean   @default(false)
+  calendarDate            DateTime  @map("calendar_date") @db.Timestamptz(6)
+  createdAt               DateTime  @default(now()) @map("created_at")
+  updatedAt               DateTime? @updatedAt @map("updated_at")
+
+  Security Securities @relation(fields: [securityId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_securities_security_daily")
+
+
+  @@unique([securityId, calendarDate], map: "security_daily_security_id_calendar_date_unique_idx")
+  @@index([securityId])
+  @@map("security_daily")
+}
+
+model SecurityDividends {
+  id             Int       @id(map: "PK_security_dividends") @default(autoincrement())
+  securityId     Int       @map("security_id")
+  expirationDate DateTime? @map("expiration_date") @db.Timestamptz(6)
+  paymentDate    DateTime  @map("payment_date") @db.Timestamptz(6)
+  recordDate     DateTime  @map("record_date") @db.Timestamptz(6)
+  amount         Decimal   @db.Decimal(13, 2)
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime? @updatedAt @map("updated_at")
+
+  Security Securities @relation(fields: [securityId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_securities_security_dividends")
+
+  @@map("security_dividends")
+}
+
+model SecurityIndexTypes {
+  id          Int     @id(map: "PK_security_index_types") @default(autoincrement())
+  name        String
+  description String?
+
+  @@map("security_index_types")
+}
+
+model SecurityMinutely {
+  securityId           Int       @map("security_id")
+  calendarDate         DateTime  @map("calendar_date") @db.Timestamptz(6)
+  minute               String?
+  label                String?
+  open                 Decimal?  @db.Decimal(13, 2)
+  close                Decimal?  @db.Decimal(13, 2)
+  high                 Decimal?  @db.Decimal(13, 2)
+  low                  Decimal?  @db.Decimal(13, 2)
+  average              Decimal?  @db.Decimal(13, 2)
+  volume               BigInt?
+  notional             Decimal?  @db.Decimal(13, 2)
+  numberOfTrades       BigInt?   @map("number_of_trades")
+  marketHigh           Decimal?  @map("market_high") @db.Decimal(13, 2)
+  marketLow            Decimal?  @map("market_low") @db.Decimal(13, 2)
+  marketAverage        Decimal?  @map("market_average") @db.Decimal(13, 2)
+  marketVolume         BigInt?   @map("market_volume")
+  marketNotional       Decimal?  @map("market_notional") @db.Decimal(13, 2)
+  marketNumberOfTrades BigInt?   @map("market_number_of_trades")
+  marketOpen           Decimal?  @map("market_open") @db.Decimal(13, 2)
+  marketClose          Decimal?  @map("market_close") @db.Decimal(13, 2)
+  changeOverTime       Decimal?  @map("change_over_time") @db.Decimal(40, 20)
+  marketChangeOverTime Decimal?  @map("market_change_over_time") @db.Decimal(40, 20)
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime? @updatedAt @map("updated_at")
+  dateTime             DateTime? @map("date_time") @db.Timestamptz(6)
+
+  Security Securities @relation(fields: [securityId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_securities_security_minutely")
+
+
+  @@id([securityId, calendarDate], map: "PK_security_minutely")
+  @@unique([securityId, calendarDate], map: "security_minutely_security_id_calendar_date_unique_idx")
+  @@index([calendarDate])
+  @@map("security_minutely")
+}
+
+model SecuritySecondly {
+  calendarDate   DateTime  @map("calendar_date") @db.Timestamptz(6)
+  securityId     Int       @map("security_id")
+  open           Decimal?  @db.Decimal(13, 2)
+  close          Decimal?  @db.Decimal(13, 2)
+  high           Decimal?  @db.Decimal(13, 2)
+  low            Decimal?  @db.Decimal(13, 2)
+  average        Decimal?  @db.Decimal(13, 2)
+  volume         BigInt?
+  notional       Decimal?  @db.Decimal(13, 2)
+  numberOfTrades BigInt?   @map("number_of_trades")
+  changeOverTime Decimal?  @map("change_over_time") @db.Decimal(40, 20)
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime? @updatedAt @map("updated_at")
+
+  Security Securities @relation(fields: [securityId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_securities_security_secondly")
+
+
+  @@id([securityId, calendarDate], map: "PK_security_secondly")
+  @@unique([securityId, calendarDate], map: "security_secondly_security_id_calendar_date_unique_idx")
+  @@index([calendarDate(sort: Desc)], map: "security_secondly_calendar_date_idx1")
+  @@map("security_secondly")
+}
+
+model SecuritySplits {
+  id            Int       @id(map: "PK_security_splits") @default(autoincrement())
+  securityId    Int       @map("security_id")
+  paymentDate   DateTime  @map("payment_date") @db.Timestamptz(6)
+  ratio         Decimal   @db.Decimal(5, 5)
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime? @updatedAt @map("updated_at")
+  exercisedDate DateTime  @map("exercised_date") @db.Timestamptz(6)
+  declaredDate  DateTime  @map("declared_date") @db.Timestamptz(6)
+  toFactor      Int       @map("to_factor")
+  fromFactor    Int       @map("from_factor")
+  description   String?
+
+  Security Securities @relation(fields: [securityId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_securities_security_splits")
+
+  @@map("security_splits")
+}
+
+model SecurityTypes {
+  id          Int     @id(map: "PK_security_types") @default(autoincrement())
+  name        String
+  description String?
+
+  @@map("security_types")
+}
+
+model Strategies {
+  id          Int     @id(map: "PK_strategies") @default(autoincrement())
+  name        String
+  description String?
+
+  StrategyParameters StrategyParameters[]
+
+  @@map("strategies")
+}
+
+model StrategyParameters {
+  id         Int     @id(map: "PK_strategy_parameters") @default(autoincrement())
+  strategyId Int     @map("strategy_id")
+  key        String
+  value      String
+  dataType   String? @map("data_type")
+
+  Strategy Strategies @relation(fields: [strategyId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_strategies_strategy_parameters")
+
+  @@map("strategy_parameters")
+}
+
+model Trades {
+  id         Int      @id(map: "PK_trades") @default(autoincrement())
+  securityId Int      @map("security_id")
+  exchangeId Int      @map("exchange_id")
+  tradeDate  DateTime @map("trade_date") @db.Timestamptz(6)
+  price      Decimal  @db.Decimal(13, 5)
+  quantity   Decimal  @db.Decimal(13, 6)
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  Exchange Exchanges  @relation(fields: [exchangeId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_trades_exchanges")
+  Security Securities @relation(fields: [securityId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_trades_security_id")
+
+  Conditions Conditions[]
+
+  @@map("trades")
+}
+
+model Quotes {
+  id            Int      @id(map: "PK_quotes") @default(autoincrement())
+  securityId    Int      @map("security_id")
+
+  bidExchangeId Int      @map("bid_exchange_id")
+  askExchangeId Int      @map("ask_exchange_id")
+
+  bidPrice      Decimal?  @db.Decimal(13, 5) @map("bid_price")
+  askPrice      Decimal?  @db.Decimal(13, 5) @map("ask_price")
+
+  bidSize       Decimal?  @db.Decimal(13, 6) @map("bid_size")
+  askSize       Decimal?  @db.Decimal(13, 6) @map("ask_size")
+
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  AskExchange Exchanges  @relation(name: "AskExchange", fields: [askExchangeId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_quotes_ask_exchanges")
+  BidExchange Exchanges  @relation(name: "BidExchange", fields: [bidExchangeId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_quotes_bid_exchanges")
+  Security Securities @relation(fields: [securityId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_quotes_security_id")
+
+  Conditions Conditions[]
+
+  @@map("quotes")
+}
+
+model Conditions {
+  id         Int      @id(map: "PK_trade_conditions") @default(autoincrement())
+  tradeId    Int      @map("trade_id")
+  quoteId    Int      @map("quote_id")
+  condition  String   @map("condition")
+  modifier   Int      @map("modifier")
+  SIPMapping String   @map("sip_mapping")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  Trade Trades @relation(fields: [tradeId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_trades_conditions")
+
+  Quote Quotes @relation(fields: [quoteId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK_quotes_conditions")
+
+  @@map("conditions")
+}
